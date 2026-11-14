@@ -28,6 +28,8 @@ We seek to answer the question: can voxel lighting be directional and occlusion-
 - Textures store light levels (RGB block light + sky light channel). Light levels turned into brightness at render time.
 - Light is computed on the CPU in the engine's thread pool. (optional: compute shaders)
 
+Note: built with my engine, [Strata](https://github.com/remyj4556/Strata-Voxel-Engine), in mind. Final product will be as engine-agnostic as possible, working with any that fit the above critera.
+
 ## Metrics
 
 Each method is compared on:
