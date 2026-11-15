@@ -42,13 +42,9 @@ func _unhandled_input(event: InputEvent) -> void:
 		get_viewport().set_input_as_handled()
 	elif event.is_action_pressed("RemoveLight"):
 		var mouse_pos : Vector2 = get_global_mouse_position()
+		var tile_pos := Vector2i(floori(mouse_pos.x / TILE_SIZE), floori(mouse_pos.y / TILE_SIZE))
+		remove_block(tile_pos)
 		get_viewport().set_input_as_handled()
-
-func reset_light_values() -> void:
-	for i in range(WIDTH):
-		for j in range(HEIGHT):
-			light_overlay.set_light(Vector2i(i,j), 0.0)
-	light_overlay.push_light()
 			
 func update_light_values(update_source_pos: Vector2i) -> void:
 	if block_grid[update_source_pos.y * WIDTH + update_source_pos.x] == LIGHT:
@@ -61,6 +57,10 @@ func place_block(pos: Vector2i, block_id: int) -> void:
 	if block_id == LIGHT:
 		update_light_values(pos)
 
+func remove_block(pos: Vector2i) -> void:
+	place_block(pos, GRASS)
+	remove_light(pos)
+	
 func flood_fill(pos: Vector2i, start_intensity: int, falloff: int) -> void:
 	if start_intensity > MAX_LIGHT_INTENSITY:
 		return
@@ -99,6 +99,17 @@ func get_light_level(pos: Vector2i) -> int:
 func set_light_level(pos: Vector2i, value: int) -> void:
 	light_grid[pos.y * WIDTH + pos.x] = value
 	light_overlay.set_light(pos, float(value) / MAX_LIGHT_INTENSITY)
+
+func remove_light(pos: Vector2i) -> void:
+	# reset light grid and light overlay to 0
+	light_grid.fill(0)
+	for cell in light_grid.size():
+		light_overlay.set_light(Vector2i(cell % WIDTH, cell / WIDTH), 0.0)
+	# recompute lights based on block grid
+	for cell in block_grid.size():
+		if block_grid[cell] == LIGHT:
+			flood_fill(Vector2i(cell % WIDTH, cell / WIDTH), MAX_LIGHT_INTENSITY, LIGHT_FALLOFF)
+	light_overlay.push_light() 
 
 # Test Environment Setups --------------------
 func set_grass() -> void:
