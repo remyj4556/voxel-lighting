@@ -12,9 +12,6 @@ const TEST_SCENE = preload("uid://eocwsab8af3x")
 
 var curr_test : TestScene = null
 
-func _init() -> void:
-	pass
-
 func _ready() -> void:
 	curr_test = TEST_SCENE.instantiate()
 	self.add_child(curr_test)
@@ -35,13 +32,17 @@ func _unhandled_input(event: InputEvent) -> void:
 		get_viewport().set_input_as_handled()
 	
 func update_light_values():
-	pass
+	for i in range(WIDTH):
+		for j in range(HEIGHT):
+			light_overlay.set_light(Vector2i(j,i), 1.0)
+	light_overlay.push_light()
 
 func spawn_light(mouse_pos: Vector2):
 	if (!curr_test):
 		print("No test scene")
 		return 
-	curr_test.draw_tile(Vector2i(floori(mouse_pos.x / TILE_SIZE), floori(mouse_pos.y / TILE_SIZE)), 0, Vector2i(1,0))
+	curr_test.draw_tile(Vector2i(floori(mouse_pos.x / TILE_SIZE), floori(mouse_pos.y / TILE_SIZE)), 0, curr_test.LIGHT)
+	update_light_values()
 
 func remove_light(mouse_pos: Vector2):
-	pass
+	update_light_values()
