@@ -7,36 +7,43 @@ const TILE_SIZE : int = 16
 const MAX_LIGHT_INTENSITY : int = 15
 const LIGHT_FALLOFF : int = 1
 
-const TEST_SCENE = preload("uid://eocwsab8af3x")
+const GRASS : int = 0
+const WALL : int = 1
+const LIGHT : int = 2
 
+var blocks : Dictionary[int, Vector2i] = {
+	GRASS: Vector2i(1,0), 
+	WALL: Vector2i(0,1), 
+	LIGHT: Vector2i(0,0)
+}
+
+@onready var terrain_tile_map: TerrainTileMap = %TerrainTileMap
 @onready var light_overlay: LightOverlay = %LightOverlay
 @onready var camera_2d: Camera2D = %Camera2D
 
-var grid_scene : TestScene = null
-var light_grid := PackedByteArray()
-var lights: Dictionary[Vector2i, int] # int is dummy value, acts as hashset
+var light_grid := PackedByteArray() # light levels
+var block_grid := PackedByteArray() # block placements
 
 func _ready() -> void:
-	grid_scene = TEST_SCENE.instantiate()
-	self.add_child(grid_scene)
-	grid_scene.position = Vector2i(0,0)
-
 	camera_2d.anchor_mode = Camera2D.ANCHOR_MODE_DRAG_CENTER
 	camera_2d.position = Vector2(WIDTH, HEIGHT) * TILE_SIZE / 2.0
 	camera_2d.zoom = Vector2(2.0, 2.0)
 	
-	light_grid.resize(LightTest.WIDTH * LightTest.HEIGHT)
+	light_grid.resize(WIDTH * HEIGHT)
+	block_grid.resize(WIDTH * HEIGHT)
+	
+	set_wall_test(10)
 	
 	reset_light_values()
 	
 func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("PlaceLight"):
 		var mouse_pos : Vector2 = get_global_mouse_position()
-		spawn_light(mouse_pos)
+		var tile_pos := Vector2i(floori(mouse_pos.x / TILE_SIZE), floori(mouse_pos.y / TILE_SIZE))
+		place_block(tile_pos, LIGHT)
 		get_viewport().set_input_as_handled()
 	elif event.is_action_pressed("RemoveLight"):
 		var mouse_pos : Vector2 = get_global_mouse_position()
-		spawn_light(mouse_pos)
 		get_viewport().set_input_as_handled()
 
 func reset_light_values() -> void:
@@ -46,28 +53,22 @@ func reset_light_values() -> void:
 	light_overlay.push_light()
 			
 func update_light_values(update_source: Vector2i) -> void:
-	if lights.has(update_source):
-		flood_fill(update_source, MAX_LIGHT_INTENSITY, LIGHT_FALLOFF)
+	# if update_source is a light block
+	flood_fill(update_source, MAX_LIGHT_INTENSITY, LIGHT_FALLOFF)
 
-func spawn_light(mouse_pos: Vector2) -> void:
-	if (!grid_scene):
-		print("No test scene")
-		return 
-		
-	var tile_coord := Vector2i(floori(mouse_pos.x / TILE_SIZE), floori(mouse_pos.y / TILE_SIZE))
-	grid_scene.draw_tile(tile_coord, 0, grid_scene.LIGHT)
-	lights[tile_coord] = 1
-	update_light_values(tile_coord)
+func place_block(pos: Vector2i, block_id: int) -> void:
+	block_grid[pos.y * WIDTH + pos.x] = block_id
+	terrain_tile_map.draw_tile(pos, 0, blocks[block_id])
+	
+	if block_id == LIGHT:
+		update_light_values(pos)
 
-func remove_light(mouse_pos: Vector2) -> void:
-	pass
-
-func flood_fill(position: Vector2i, start_intensity: int, falloff: int) -> void:
+func flood_fill(pos: Vector2i, start_intensity: int, falloff: int) -> void:
 	if start_intensity > MAX_LIGHT_INTENSITY:
 		return
 
 	var bfs_array : Array[Array]
-	bfs_array.push_back([position, start_intensity])
+	bfs_array.push_back([pos, start_intensity])
 	while not bfs_array.is_empty():
 		var curr : Array = bfs_array.pop_front()
 		var coord : Vector2i = curr[0]
@@ -92,9 +93,24 @@ func flood_fill(position: Vector2i, start_intensity: int, falloff: int) -> void:
 				bfs_array.push_back([Vector2i(nx, ny), next_intensity])
 	light_overlay.push_light()
 	
-func get_light_level(c: Vector2i) -> int:
-	return light_grid[c.y * WIDTH + c.x]
+func get_light_level(pos: Vector2i) -> int:
+	return light_grid[pos.y * WIDTH + pos.x]
 
-func set_light_level(c: Vector2i, v: int) -> void:
-	light_grid[c.y * WIDTH + c.x] = v
-	light_overlay.set_light(c, float(v) / MAX_LIGHT_INTENSITY)
+func set_light_level(pos: Vector2i, value: int) -> void:
+	light_grid[pos.y * WIDTH + pos.x] = value
+	light_overlay.set_light(pos, float(value) / MAX_LIGHT_INTENSITY)
+
+# Test Environment Setups --------------------
+func set_grass() -> void:
+	for i in range(WIDTH):
+		for j in range(HEIGHT):
+			place_block(Vector2i(i,j), GRASS)
+	
+func set_single_block_test() -> void:
+	set_grass()
+	place_block(Vector2i(WIDTH / 2, HEIGHT / 2), WALL)
+
+func set_wall_test(length: int) -> void:
+	set_grass()
+	for i in range(-length/2, length/2):
+		place_block(Vector2i(WIDTH / 2 + i, HEIGHT / 2), WALL)

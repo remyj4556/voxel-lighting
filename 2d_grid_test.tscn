@@ -2,6 +2,17 @@
 
 [ext_resource type="Script" uid="uid://c52qd3apfn37q" path="res://light_overlay.gd" id="1_af8tm"]
 [ext_resource type="Script" uid="uid://bgmdkpmh7gv4k" path="res://2d_grid_test.gd" id="1_imc23"]
+[ext_resource type="Texture2D" uid="uid://b1t4nyl2x5cw" path="res://spritesheet.png" id="3_nott1"]
+[ext_resource type="Script" uid="uid://brle11r3v8wgv" path="res://terrain_tilemap.gd" id="4_poa77"]
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_ia1lp"]
+texture = ExtResource("3_nott1")
+0:0/0 = 0
+1:0/0 = 0
+0:1/0 = 0
+
+[sub_resource type="TileSet" id="TileSet_imc23"]
+sources/0 = SubResource("TileSetAtlasSource_ia1lp")
 
 [node name="Node2D" type="Node2D" unique_id=61349667]
 script = ExtResource("1_imc23")
@@ -12,3 +23,8 @@ unique_name_in_owner = true
 [node name="LightOverlay" type="Sprite2D" parent="." unique_id=203417429]
 unique_name_in_owner = true
 script = ExtResource("1_af8tm")
+
+[node name="TerrainTileMap" type="TileMapLayer" parent="." unique_id=2125155554]
+unique_name_in_owner = true
+tile_set = SubResource("TileSet_imc23")
+script = ExtResource("4_poa77")
