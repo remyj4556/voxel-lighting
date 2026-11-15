@@ -34,8 +34,6 @@ func _ready() -> void:
 	
 	set_wall_test(10)
 	
-	reset_light_values()
-	
 func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("PlaceLight"):
 		var mouse_pos : Vector2 = get_global_mouse_position()
@@ -52,9 +50,9 @@ func reset_light_values() -> void:
 			light_overlay.set_light(Vector2i(i,j), 0.0)
 	light_overlay.push_light()
 			
-func update_light_values(update_source: Vector2i) -> void:
-	# if update_source is a light block
-	flood_fill(update_source, MAX_LIGHT_INTENSITY, LIGHT_FALLOFF)
+func update_light_values(update_source_pos: Vector2i) -> void:
+	if block_grid[update_source_pos.y * WIDTH + update_source_pos.x] == LIGHT:
+		flood_fill(update_source_pos, MAX_LIGHT_INTENSITY, LIGHT_FALLOFF)
 
 func place_block(pos: Vector2i, block_id: int) -> void:
 	block_grid[pos.y * WIDTH + pos.x] = block_id
@@ -85,6 +83,8 @@ func flood_fill(pos: Vector2i, start_intensity: int, falloff: int) -> void:
 			if nx < 0 or nx > WIDTH: 
 				continue
 			if ny < 0 or ny > HEIGHT:
+				continue
+			if block_grid[ny * WIDTH + nx] == WALL:
 				continue
 			
 			var next_intensity : int = value - falloff;
