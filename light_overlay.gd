@@ -15,8 +15,8 @@ func _ready() -> void:
 	# move to front so tiles do not cover it
 	z_index = 1
 
-func set_light(cell: Vector2i, value: float):
+func set_light(cell: Vector2i, value: float) -> void:
 	light_img.set_pixel(cell.x, cell.y, Color(value, value, value))
 
-func push_light():
+func push_light() -> void:
 	light_tex.update(light_img) 
