@@ -34,20 +34,26 @@ func _ready() -> void:
 	light_grid.resize(WIDTH * HEIGHT)
 	block_grid.resize(WIDTH * HEIGHT)
 	
-	#set_room_test(10)
-	set_wall_test(10)
+	set_room_test(10)
+	#set_wall_test(10)
 	#set_single_block_test()
 	
 func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("PlaceLight"):
 		var mouse_pos : Vector2 = get_global_mouse_position()
 		var tile_pos := Vector2i(floori(mouse_pos.x / TILE_SIZE), floori(mouse_pos.y / TILE_SIZE))
-		place_block(tile_pos, LIGHT)
+		if block_grid[tile_pos.y * WIDTH + tile_pos.x] == LIGHT:
+			remove_block(tile_pos)
+		else:
+			place_block(tile_pos, LIGHT)
 		get_viewport().set_input_as_handled()
-	elif event.is_action_pressed("RemoveLight"):
+	elif event.is_action_pressed("PlaceWall"):
 		var mouse_pos : Vector2 = get_global_mouse_position()
 		var tile_pos := Vector2i(floori(mouse_pos.x / TILE_SIZE), floori(mouse_pos.y / TILE_SIZE))
-		remove_block(tile_pos)
+		if block_grid[tile_pos.y * WIDTH + tile_pos.x] == WALL:
+			remove_block(tile_pos)
+		else:
+			place_block(tile_pos, WALL)
 		get_viewport().set_input_as_handled()
 			
 func update_light_values(update_source_pos: Vector2i) -> void:
@@ -61,10 +67,13 @@ func place_block(pos: Vector2i, block_id: int) -> void:
 	
 	if block_id == LIGHT:
 		update_light_values(pos)
+	else:
+		recompute_lights()
+	
 
 func remove_block(pos: Vector2i) -> void:
 	place_block(pos, GRASS)
-	remove_light(pos)
+	recompute_lights()
 
 func get_corner_pos(pos: Vector2i, corner: Corners) -> Vector2:
 	var dx : Array[float] = [0, 1, 1, 0]
@@ -211,7 +220,7 @@ func set_light_level(pos: Vector2i, value: int) -> void:
 	light_grid[pos.y * WIDTH + pos.x] = value
 	light_overlay.set_light(pos, float(value) / MAX_LIGHT_INTENSITY)
 
-func remove_light(pos: Vector2i) -> void:
+func recompute_lights() -> void:
 	# reset light grid and light overlay to 0
 	light_grid.fill(0)
 	for cell in light_grid.size():
